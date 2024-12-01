@@ -63,11 +63,10 @@ The project is actively being developed to meet these goals, and these enhanceme
 
 ## How to Use
 
-1.
-    ```bash
+```bash
   boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
 		WithMongoDBURL("mongodb://localhost:27017").
-		WithKafkaURL("kafka://localhost:9092").
+		WithKafkaURL("localhost:9092").
 		WithOutboxCollection("outbox"). //default as outbox if u need use this and change it
 		WithInboxCollection("inbox"). //default as inbox if u need use this and change it
 		WithRetryAttempts(3).
@@ -98,7 +97,7 @@ The project is actively being developed to meet these goals, and these enhanceme
 	}
 
 	boxBridge.AddConsumer(consumerConfig)
-    ```
+```
 
 **Auto Created Collections**
 ![Auto Created Collections](https://i.imgur.com/8W5J0ek.png)
