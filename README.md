@@ -6,6 +6,8 @@ The `BoxBridge` library is a system that handles message processing between a Ka
 
 The project also provides a flexible configuration mechanism for both Kafka and MongoDB, making it easy to set up and use with minimal configuration.
 
+BoxBridge will automatically create the necessary Inbox and Outbox collections in MongoDB. These collections will serve as storage for messages, providing a mechanism for tracking and ensuring reliable message delivery. The system is designed to handle retries and failures, ensuring that messages are not lost during transmission between MongoDB and Kafka.
+
 ## Project Goals
 
 The main goal of the BoxBridge project is to create a robust system that facilitates reliable and scalable message processing between Kafka and MongoDB. The system utilizes the Inbox/Outbox pattern, ensuring that messages are first stored in MongoDB before being sent to Kafka, and that incoming messages from Kafka are stored in MongoDB before being processed.
@@ -37,33 +39,15 @@ Key objectives of the project include:
 By achieving these goals, the BoxBridge project aims to provide a flexible, easy-to-use framework for reliable message processing between Kafka and MongoDB, which can be seamlessly integrated into various service architectures.
 
 
-## Future Plans
-
-While the BoxBridge project is in active development and functional in its current state, there are several areas that are planned for improvement to make it more suitable for production environments. These include:
+## Limitations For Now
 
 1. **Multi-Database Support**:
    - The current implementation supports MongoDB, but future versions will include support for additional databases (such as PostgreSQL, MySQL, or Redis). This will enable BoxBridge to integrate with a wider range of systems and provide flexibility in handling messages in different environments.
 
-2. **Retry Mechanism Enhancements**:
-   - The current retry logic is basic and will be improved to include more advanced configurations, such as exponential backoff, error categorization, and customizable retry policies. This will enhance the system’s ability to recover from temporary failures without causing delays or data loss.
+2. **Work On just one kafka cluster**:
+   - Need to support multiple kafka cluster at once for producer and consumer.
 
-3. **Advanced Logging**:
-   - Future versions will include more detailed and configurable logging, allowing users to easily monitor message processing, track errors, and generate useful diagnostic information for troubleshooting. Logs will include message IDs, timestamps, retries, and success/failure statuses.
 
-4. **Message Prioritization**:
-   - There are plans to implement message prioritization, where certain messages are handled with higher priority than others. This will be especially useful for time-sensitive or critical operations, ensuring that they are processed first.
-
-5. **Transaction Management**:
-   - To improve reliability, transaction management will be introduced to ensure that messages are processed atomically. If a message fails at any point (e.g., in the Outbox or Kafka), the system will ensure that no partial transactions are committed, preventing data corruption or inconsistency.
-
-6. **Monitoring and Metrics**:
-   - The integration of monitoring tools and metrics collection will be added to provide real-time insights into system performance. This will include message throughput, error rates, and resource utilization, enabling better monitoring and scalability management.
-
-7. **Security Enhancements**:
-   - BoxBridge will be enhanced to include features such as encryption of messages in transit and at rest, authentication, and authorization mechanisms to ensure that only authorized services can interact with the system.
-
-8. **Better Fault Tolerance**:
-   - Improvements to fault tolerance will be made to ensure that the system can handle a wide variety of failures, such as network issues, database unavailability, or Kafka failures, without causing service downtime or message loss.
 
 
 The project is actively being developed to meet these goals, and these enhancements will be implemented to ensure that BoxBridge can operate seamlessly in a production environment, with increased scalability, reliability, and user configurability.
@@ -110,3 +94,9 @@ The project is actively being developed to meet these goals, and these enhanceme
 	boxBridge.AddConsumer(consumerConfig)
     ```
 
+**Auto Created Collections**
+![Auto Created Collections](https://i.imgur.com/8W5J0ek.png)
+**Outbox Collection**
+![Outbox](https://i.imgur.com/nYn2CK5.png)
+**Inbox Collection**
+![Inbox](https://i.imgur.com/gXoH5R5.png)
