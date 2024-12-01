@@ -4,7 +4,6 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Inbox struct {
 	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	MessageID    string             `json:"messageId" bson:"message_id"`
 	Topic        string             `json:"topic" bson:"topic"`
 	Offset       string             `json:"offset" bson:"offset"`
 	Key          string             `json:"key" bson:"key"`

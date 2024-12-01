@@ -6,6 +6,7 @@ import (
 
 	"github.com/erdemkosk/box_bridge/pkg"
 	"github.com/erdemkosk/box_bridge/pkg/model"
+	"github.com/google/uuid"
 )
 
 type Foo struct {
@@ -30,7 +31,7 @@ func main() {
 
 	boxBridge.AddProducer(producerConfig)
 
-	boxBridge.Produce(producerConfig, "key1", Foo{
+	boxBridge.Produce(producerConfig, uuid.New().String(), Foo{
 		Name: "Erdem Köşk",
 		Note: "Hey , box-bridge is amazing mate!",
 	})

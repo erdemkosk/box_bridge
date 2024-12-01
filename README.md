@@ -48,19 +48,6 @@ By achieving these goals, the BoxBridge project aims to provide a flexible, easy
    - Need to support multiple kafka cluster at once for producer and consumer.
 
 
-
-
-The project is actively being developed to meet these goals, and these enhancements will be implemented to ensure that BoxBridge can operate seamlessly in a production environment, with increased scalability, reliability, and user configurability.
-
-
-## Dependencies
-
-- Kafka: For message production and consumption.
-- MongoDB: For storing messages in the Outbox and Inbox collections.
-- Go: The programming language used for the implementation.
-
----
-
 ## How to Use
 
 ```bash
@@ -98,6 +85,23 @@ The project is actively being developed to meet these goals, and these enhanceme
 
 	boxBridge.AddConsumer(consumerConfig)
 ```
+ **Console:**
+ ```bash
+  2024/12/01 22:21:47 BOX-BRIDGE: MongoDB connection successfully established.
+%4|1733080907.611|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
+%4|1733080907.611|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
+2024/12/01 22:21:47 BOX-BRIDGE: Producer for topic my-topic initialized
+2024/12/01 22:21:47 BOX-BRIDGE: Message delivered to my-topic[0]@11
+2024/12/01 22:21:47 Message successfully sent to Kafka!
+2024/12/01 22:21:47 BOX-BRIDGE: Consumer for topic my-topic started
+2024/12/01 22:21:50 Received message: {"name":"Erdem Köşk","note":"Hey , box-bridge is amazing mate!"}
+2024/12/01 22:21:57 Shutting down Kafka manager
+2024/12/01 22:21:57 BOX-BRIDGE: Closing consumer for topic my-topic
+2024/12/01 22:21:57 BOX-BRIDGE: Closing producer for topic my-topic
+2024/12/01 22:21:57 BOX-BRIDGE: Kafka Manager shut down gracefully
+2024/12/01 22:21:58 BOX-BRIDGE: MongoDB connection successfully closed.
+```   
+
 
 **Auto Created Collections**
 ![Auto Created Collections](https://i.imgur.com/8W5J0ek.png)

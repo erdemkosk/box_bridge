@@ -46,6 +46,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 	wrappedHandler := func(msg *kafkaModels.KafkaMessage) error {
 
 		inboxMessage := models.Inbox{
+			Topic:     *msg.TopicPartition.Topic,
 			Offset:    fmt.Sprintf("%v", msg.TopicPartition.Offset),
 			Key:       string(msg.Key),
 			Content:   string(msg.Value),
