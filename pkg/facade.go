@@ -13,15 +13,22 @@ import (
 )
 
 type Boxbridge struct {
-	config *Config
+	config *BoxBridgeConfig
 }
 
 var boxbridgeRunner *Boxbridge
 var kafkaManager *kafka.KafkaManager
 var mongoManager *db.MongoManager
 
-func NewBoxBridge(config *Config) *Boxbridge {
-	mongoManager, _ = db.NewMongoManager(config.MongoDBURL)
+func NewBoxBridge(config *BoxBridgeConfig) *Boxbridge {
+	var mongoErr error
+
+	mongoManager, mongoErr = db.NewMongoManager(config.MongoDBURL)
+
+	if mongoErr != nil {
+		panic(mongoErr)
+	}
+
 	kafkaManager = kafka.NewKafkaManager(config.KafkaURL, "my-consumer-group")
 
 	return boxbridgeRunner

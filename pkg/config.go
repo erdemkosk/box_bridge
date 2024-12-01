@@ -1,6 +1,6 @@
 package pkg
 
-type Config struct {
+type BoxBridgeConfig struct {
 	MongoDBURL    string `mapstructure:"MONGODB_URL"`
 	KafkaURL      string `mapstructure:"KAFKA_URL"`
 	OutboxColl    string `mapstructure:"OUTBOX_COLLECTION"`
@@ -16,30 +16,55 @@ const (
 	defaultRetryAttempts = 3
 )
 
-func NewConfig(mongoDBURL string, kafkaURL string, outboxColl string, inboxColl string, retryAttempts int) *Config {
-	config := Config{
-		MongoDBURL:    mongoDBURL,
-		KafkaURL:      kafkaURL,
-		OutboxColl:    outboxColl,
-		InboxColl:     inboxColl,
-		RetryAttempts: retryAttempts,
+type ConfigBuilder struct {
+	config *BoxBridgeConfig
+}
+
+func NewConfigBuilder() *ConfigBuilder {
+	return &ConfigBuilder{config: &BoxBridgeConfig{}}
+}
+
+func (cb *ConfigBuilder) WithMongoDBURL(url string) *ConfigBuilder {
+	cb.config.MongoDBURL = url
+	return cb
+}
+
+func (cb *ConfigBuilder) WithKafkaURL(url string) *ConfigBuilder {
+	cb.config.KafkaURL = url
+	return cb
+}
+
+func (cb *ConfigBuilder) WithOutboxCollection(collection string) *ConfigBuilder {
+	cb.config.OutboxColl = collection
+	return cb
+}
+
+func (cb *ConfigBuilder) WithInboxCollection(collection string) *ConfigBuilder {
+	cb.config.InboxColl = collection
+	return cb
+}
+
+func (cb *ConfigBuilder) WithRetryAttempts(attempts int) *ConfigBuilder {
+	cb.config.RetryAttempts = attempts
+	return cb
+}
+
+func (cb *ConfigBuilder) Build() *BoxBridgeConfig {
+	if cb.config.MongoDBURL == "" {
+		cb.config.MongoDBURL = defaultMongoDBURL
+	}
+	if cb.config.KafkaURL == "" {
+		cb.config.KafkaURL = defaultKafkaURL
+	}
+	if cb.config.OutboxColl == "" {
+		cb.config.OutboxColl = defaultOutboxColl
+	}
+	if cb.config.InboxColl == "" {
+		cb.config.InboxColl = defaultInboxColl
+	}
+	if cb.config.RetryAttempts == 0 {
+		cb.config.RetryAttempts = defaultRetryAttempts
 	}
 
-	if config.MongoDBURL == "" {
-		config.MongoDBURL = defaultMongoDBURL
-	}
-	if config.KafkaURL == "" {
-		config.KafkaURL = defaultKafkaURL
-	}
-	if config.OutboxColl == "" {
-		config.OutboxColl = defaultOutboxColl
-	}
-	if config.InboxColl == "" {
-		config.InboxColl = defaultInboxColl
-	}
-	if config.RetryAttempts == 0 {
-		config.RetryAttempts = defaultRetryAttempts
-	}
-
-	return &config
+	return cb.config
 }

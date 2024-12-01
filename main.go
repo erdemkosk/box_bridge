@@ -14,7 +14,14 @@ type Foo struct {
 }
 
 func main() {
-	boxBridge := pkg.NewBoxBridge(pkg.NewConfig("localhost:27017", "", "", "", 0))
+
+	boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
+		WithMongoDBURL("mongodb://localhost:27017").
+		WithKafkaURL("localhost:9092").
+		WithOutboxCollection("outbox").
+		WithInboxCollection("inbox").
+		WithRetryAttempts(3).
+		Build())
 
 	producerConfig := model.ProducerConfig{
 		TopicName: "my-topic",

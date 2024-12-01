@@ -65,7 +65,13 @@ The project is actively being developed to meet these goals, and these enhanceme
 
 1.
     ```bash
-   boxBridge := pkg.NewBoxBridge(pkg.NewConfig("localhost:27017", "", "", "", 0))
+  boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
+		WithMongoDBURL("mongodb://localhost:27017").
+		WithKafkaURL("kafka://localhost:9092").
+		WithOutboxCollection("outbox"). //default as outbox if u need use this and change it
+		WithInboxCollection("inbox"). //default as inbox if u need use this and change it
+		WithRetryAttempts(3).
+		Build())
 
 	producerConfig := model.ProducerConfig{
 		TopicName: "my-topic",
