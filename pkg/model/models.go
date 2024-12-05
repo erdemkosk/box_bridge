@@ -16,6 +16,11 @@ type KafkaMessage struct {
 	Headers        []kafka.Header
 }
 
+type KafkaHeader struct {
+	Key   string
+	Value []byte
+}
+
 type ProducerConfig struct {
 	TopicName                  string // Topic name to publish messages to
 	Acks                       string // Acknowledgment level for the message (e.g., "all", "1", "0")

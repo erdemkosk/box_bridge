@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/erdemkosk/box_bridge/pkg/model"
 )
 
 const (
@@ -66,4 +67,24 @@ func GetMessageFromKafka(targetType interface{}) {
 			fmt.Printf("Error: %v\n", err)
 		}
 	}
+}
+
+func GetHeaderValue(headers []kafka.Header, key string) (string, bool) {
+	for _, header := range headers {
+		if header.Key == key {
+			return string(header.Value), true
+		}
+	}
+	return "", false
+}
+
+func ConvertKafkaHeadersToWrapperHeaders(kafkaHeaders []model.KafkaHeader) []kafka.Header {
+	headers := make([]kafka.Header, len(kafkaHeaders))
+	for i, kh := range kafkaHeaders {
+		headers[i] = kafka.Header{
+			Key:   kh.Key,
+			Value: kh.Value,
+		}
+	}
+	return headers
 }

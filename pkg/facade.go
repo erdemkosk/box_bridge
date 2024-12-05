@@ -9,7 +9,9 @@ import (
 	"github.com/erdemkosk/box_bridge/internal/db"
 	"github.com/erdemkosk/box_bridge/internal/db/models"
 	"github.com/erdemkosk/box_bridge/internal/kafka"
+	"github.com/erdemkosk/box_bridge/pkg/model"
 	kafkaModels "github.com/erdemkosk/box_bridge/pkg/model"
+	"github.com/google/uuid"
 )
 
 type Boxbridge struct {
@@ -45,14 +47,21 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 
 	wrappedHandler := func(msg *kafkaModels.KafkaMessage) error {
 
+		correlationID, found := kafka.GetHeaderValue(msg.Headers, "CorrelationID")
+		if !found {
+			log.Println("CorrelationID not found in message headers")
+			correlationID = "unknown"
+		}
+
 		inboxMessage := models.Inbox{
-			Topic:     *msg.TopicPartition.Topic,
-			Offset:    fmt.Sprintf("%v", msg.TopicPartition.Offset),
-			Key:       string(msg.Key),
-			Content:   string(msg.Value),
-			Status:    "Received",
-			CreatedAt: time.Now().Format(time.RFC3339),
-			UpdatedAt: time.Now().Format(time.RFC3339),
+			Topic:         *msg.TopicPartition.Topic,
+			CorrelationID: correlationID,
+			Offset:        fmt.Sprintf("%v", msg.TopicPartition.Offset),
+			Key:           string(msg.Key),
+			Content:       string(msg.Value),
+			Status:        "Received",
+			CreatedAt:     time.Now().Format(time.RFC3339),
+			UpdatedAt:     time.Now().Format(time.RFC3339),
 		}
 
 		err := mongoManager.SaveToInbox(inboxMessage)
@@ -73,25 +82,35 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 }
 
 // (Outbox → Kafka -> Update Status Of Outbox)
-func (bb *Boxbridge) Produce(producerConfig kafkaModels.ProducerConfig, key string, message interface{}) error {
+func (bb *Boxbridge) Produce(producerConfig kafkaModels.ProducerConfig, key string, message interface{}, correlationID string, headers []model.KafkaHeader) error {
+
+	if correlationID == "" {
+		correlationID = uuid.New().String()
+	}
 
 	jsonKey, _ := json.Marshal(key)
 	jsonMessage, _ := json.Marshal(message)
 
 	err := mongoManager.SaveToOutbox(models.Outbox{
-		MessageID:  key,
-		Topic:      producerConfig.TopicName,
-		Content:    string(jsonMessage),
-		Status:     "WaitingForSendingKafka",
-		RetryCount: 3,
-		CreatedAt:  time.Now().Format(time.RFC3339),
-		UpdatedAt:  time.Now().Format(time.RFC3339),
+		Key:           key,
+		CorrelationID: correlationID,
+		Topic:         producerConfig.TopicName,
+		Content:       string(jsonMessage),
+		Status:        "WaitingForSendingKafka",
+		RetryCount:    3,
+		CreatedAt:     time.Now().Format(time.RFC3339),
+		UpdatedAt:     time.Now().Format(time.RFC3339),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to save to outbox: %v", err)
 	}
 
-	if err := kafkaManager.Produce(producerConfig.TopicName, jsonKey, jsonMessage); err != nil {
+	headers = append(headers, model.KafkaHeader{
+		Key:   "CorrelationID",
+		Value: []byte(correlationID),
+	})
+
+	if err := kafkaManager.Produce(producerConfig.TopicName, jsonKey, jsonMessage, headers); err != nil {
 		log.Printf("Error sending message: %v", err)
 	} else {
 		log.Println("Message successfully sent to Kafka!")

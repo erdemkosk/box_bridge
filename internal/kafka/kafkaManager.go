@@ -76,6 +76,7 @@ func (k *KafkaManager) StartConsumer(topicConfig model.ConsumerConfig) error {
 				return
 			default:
 				msg, err := consumer.ReadMessage(-1)
+
 				convertedValue := model.KafkaMessage{
 					TopicPartition: msg.TopicPartition,
 					Value:          msg.Value,
@@ -99,9 +100,14 @@ func (k *KafkaManager) StartConsumer(topicConfig model.ConsumerConfig) error {
 	return nil
 }
 
-func (k *KafkaManager) Produce(topic string, key []byte, value []byte) error {
+func (k *KafkaManager) Produce(topic string, key []byte, value []byte, headers []model.KafkaHeader) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+
+	var convertedHeaders []kafka.Header
+	if headers != nil && len(headers) > 0 {
+		convertedHeaders = ConvertKafkaHeadersToWrapperHeaders(headers)
+	}
 
 	producer, ok := k.producers[topic]
 	if !ok {
@@ -116,8 +122,9 @@ func (k *KafkaManager) Produce(topic string, key []byte, value []byte) error {
 			Topic:     &topic,
 			Partition: kafka.PartitionAny,
 		},
-		Key:   key,
-		Value: value,
+		Key:     key,
+		Value:   value,
+		Headers: convertedHeaders,
 	}, deliveryChan)
 	if err != nil {
 		return err

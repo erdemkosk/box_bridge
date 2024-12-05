@@ -31,10 +31,10 @@ func main() {
 
 	boxBridge.AddProducer(producerConfig)
 
-	boxBridge.Produce(producerConfig, uuid.New().String(), Foo{
+	boxBridge.Produce(producerConfig, "key", Foo{
 		Name: "Erdem Köşk",
 		Note: "Hey , box-bridge is amazing mate!",
-	})
+	}, uuid.New().String()+"-example service", nil)
 
 	// Create handler function for consumer each or one
 	handlerFunc := func(msg *model.KafkaMessage) error {
