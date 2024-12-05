@@ -132,3 +132,6 @@ By achieving these goals, the BoxBridge project aims to provide a flexible, easy
 ![Inbox](https://i.imgur.com/gXoH5R5.png)
 **Receive message but if u cannot processed it wont commited on inbox**
 ![Inbox](https://i.imgur.com/yOpyMOB.png)
+**Receive message and processed it commited and mark as Processed**
+![Inbox](https://i.imgur.com/CAMyRnJ.png)
+
