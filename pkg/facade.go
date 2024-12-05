@@ -87,6 +87,11 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 			return err
 		}
 
+		err = mongoManager.UpdateInboxStatus(correlationID, "Processed")
+		if err != nil {
+			return fmt.Errorf("failed to update inbox status: %v", err)
+		}
+
 		log.Printf("Message successfully processed and offset committed for %v", msg.TopicPartition)
 
 		return nil

@@ -81,7 +81,25 @@ func (m *MongoManager) SaveToOutbox(message models.Outbox) error {
 }
 
 func (m *MongoManager) SaveToInbox(message models.Inbox) error {
-	return m.insertMessage("inbox", message)
+
+	filter := bson.M{
+		"correlation_id": message.CorrelationID,
+	}
+
+	var result models.Inbox
+
+	err := m.database.Collection("inbox").FindOne(context.Background(), filter).Decode(&result)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			m.insertMessage("inbox", message)
+		} else {
+
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m *MongoManager) UpdateOutboxStatus(correlationId string, status string) error {
@@ -106,7 +124,9 @@ func (m *MongoManager) UpdateOutboxStatus(correlationId string, status string) e
 func (m *MongoManager) UpdateInboxStatus(correlationId string, status string) error {
 	collection := m.database.Collection("inbox")
 
-	filter := bson.M{"correlation_id": correlationId}
+	filter := bson.M{
+		"correlation_id": correlationId,
+	}
 
 	update := bson.M{
 		"$set": bson.M{
