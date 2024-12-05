@@ -102,19 +102,23 @@ func main() {
 ```
  **Console:**
  ```bash
-  2024/12/01 22:21:47 BOX-BRIDGE: MongoDB connection successfully established.
-%4|1733080907.611|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
-%4|1733080907.611|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
-2024/12/01 22:21:47 BOX-BRIDGE: Producer for topic my-topic initialized
-2024/12/01 22:21:47 BOX-BRIDGE: Message delivered to my-topic[0]@11
-2024/12/01 22:21:47 Message successfully sent to Kafka!
-2024/12/01 22:21:47 BOX-BRIDGE: Consumer for topic my-topic started
-2024/12/01 22:21:50 Received message: {"name":"Erdem Köşk","note":"Hey , box-bridge is amazing mate!"}
-2024/12/01 22:21:57 Shutting down Kafka manager
-2024/12/01 22:21:57 BOX-BRIDGE: Closing consumer for topic my-topic
-2024/12/01 22:21:57 BOX-BRIDGE: Closing producer for topic my-topic
-2024/12/01 22:21:57 BOX-BRIDGE: Kafka Manager shut down gracefully
-2024/12/01 22:21:58 BOX-BRIDGE: MongoDB connection successfully closed.
+2024/12/05 23:09:01 BOX-BRIDGE: Collection 'inbox' created successfully
+2024/12/05 23:09:02 BOX-BRIDGE: Collection 'outbox' created successfully
+2024/12/05 23:09:02 BOX-BRIDGE: Collection 'inbox' correlationId index created successfully
+2024/12/05 23:09:02 BOX-BRIDGE: Collection 'outbox' correlationId index created successfully
+2024/12/05 23:09:02 BOX-BRIDGE: MongoDB connection successfully established.
+%4|1733429342.353|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
+%4|1733429342.353|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
+2024/12/05 23:09:02 BOX-BRIDGE: Producer for topic my-topic initialized
+2024/12/05 23:09:02 BOX-BRIDGE: Message delivered to my-topic[0]@15
+2024/12/05 23:09:02 Message successfully sent to Kafka!
+2024/12/05 23:09:02 BOX-BRIDGE: Consumer for topic my-topic started
+2024/12/05 23:09:05 Received message: {"name":"Erdem Köşk","note":"Hey , box-bridge is amazing mate!"}
+2024/12/05 23:09:12 Shutting down Kafka manager
+2024/12/05 23:09:12 BOX-BRIDGE: Closing consumer for topic my-topic
+2024/12/05 23:09:12 BOX-BRIDGE: Closing producer for topic my-topic
+2024/12/05 23:09:12 BOX-BRIDGE: Kafka Manager shut down gracefully
+2024/12/05 23:09:12 BOX-BRIDGE: MongoDB connection successfully closed.
 ```   
 
 

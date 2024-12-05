@@ -47,6 +47,15 @@ func NewMongoManager(mongoDbURL string) (*MongoManager, error) {
 		log.Printf("BOX-BRIDGE: Error occurred while creating outbox collection: %v", err)
 	}
 
+	// Create an index on CorrelationID for both Inbox and Outbox collections
+	if err := createIndexIfNotExists(ctx, database.Collection("inbox"), "correlationId"); err != nil {
+		log.Printf("BOX-BRIDGE: Error occurred while creating index on CorrelationID for inbox: %v", err)
+	}
+
+	if err := createIndexIfNotExists(ctx, database.Collection("outbox"), "correlationId"); err != nil {
+		log.Printf("BOX-BRIDGE: Error occurred while creating index on CorrelationID for outbox: %v", err)
+	}
+
 	log.Println("BOX-BRIDGE: MongoDB connection successfully established.")
 
 	return &MongoManager{
@@ -113,6 +122,17 @@ func createCollectionIfNotExists(ctx context.Context, db *mongo.Database, collNa
 
 	log.Printf("BOX-BRIDGE: Collection '%s' created successfully", collName)
 	return nil
+}
+
+func createIndexIfNotExists(ctx context.Context, collection *mongo.Collection, indexField string) error {
+	mod := mongo.IndexModel{
+		Keys: bson.D{{Key: indexField, Value: 1}}, // 1 for ascending order
+	}
+
+	_, err := collection.Indexes().CreateOne(ctx, mod)
+
+	log.Printf("BOX-BRIDGE: Collection '%s' %s index created successfully", collection.Name(), indexField)
+	return err
 }
 
 func getDatabaseName(connectionString string) string {
