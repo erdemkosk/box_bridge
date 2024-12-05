@@ -51,18 +51,11 @@ By achieving these goals, the BoxBridge project aims to provide a flexible, easy
 ## How to Use
 
 ```bash
- type Foo struct {
-	Name string `json:"name"`
-	Note string `json:"note"`
-}
-
-func main() {
-
-	boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
+  boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
 		WithMongoDBURL("mongodb://localhost:27017").
 		WithKafkaURL("localhost:9092").
-		WithOutboxCollection("outbox").
-		WithInboxCollection("inbox").
+		WithOutboxCollection("outbox"). //default as outbox if u need use this and change it
+		WithInboxCollection("inbox"). //default as inbox if u need use this and change it
 		WithRetryAttempts(3).
 		Build())
 
@@ -73,10 +66,10 @@ func main() {
 
 	boxBridge.AddProducer(producerConfig)
 
-	boxBridge.Produce(producerConfig, "key", Foo{
+	boxBridge.Produce(producerConfig, "key1", Foo{
 		Name: "Erdem Köşk",
 		Note: "Hey , box-bridge is amazing mate!",
-	}, uuid.New().String()+"-example service", nil)
+	})
 
 	// Create handler function for consumer each or one
 	handlerFunc := func(msg *model.KafkaMessage) error {
@@ -91,35 +84,44 @@ func main() {
 	}
 
 	boxBridge.AddConsumer(consumerConfig)
-
-	select {
-	case <-time.After(10 * time.Second):
-		log.Println("Shutting down Kafka manager")
-		boxBridge.Shutdown()
-	}
-
-}
 ```
- **Console:**
+ **Console For Handle Consumer With Success:**
  ```bash
-2024/12/05 23:09:01 BOX-BRIDGE: Collection 'inbox' created successfully
-2024/12/05 23:09:02 BOX-BRIDGE: Collection 'outbox' created successfully
-2024/12/05 23:09:02 BOX-BRIDGE: Collection 'inbox' correlationId index created successfully
-2024/12/05 23:09:02 BOX-BRIDGE: Collection 'outbox' correlationId index created successfully
-2024/12/05 23:09:02 BOX-BRIDGE: MongoDB connection successfully established.
-%4|1733429342.353|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
-%4|1733429342.353|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
-2024/12/05 23:09:02 BOX-BRIDGE: Producer for topic my-topic initialized
-2024/12/05 23:09:02 BOX-BRIDGE: Message delivered to my-topic[0]@15
-2024/12/05 23:09:02 Message successfully sent to Kafka!
-2024/12/05 23:09:02 BOX-BRIDGE: Consumer for topic my-topic started
-2024/12/05 23:09:05 Received message: {"name":"Erdem Köşk","note":"Hey , box-bridge is amazing mate!"}
-2024/12/05 23:09:12 Shutting down Kafka manager
-2024/12/05 23:09:12 BOX-BRIDGE: Closing consumer for topic my-topic
-2024/12/05 23:09:12 BOX-BRIDGE: Closing producer for topic my-topic
-2024/12/05 23:09:12 BOX-BRIDGE: Kafka Manager shut down gracefully
-2024/12/05 23:09:12 BOX-BRIDGE: MongoDB connection successfully closed.
+  2024/12/01 22:21:47 BOX-BRIDGE: MongoDB connection successfully established.
+%4|1733080907.611|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
+%4|1733080907.611|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
+2024/12/01 22:21:47 BOX-BRIDGE: Producer for topic my-topic initialized
+2024/12/01 22:21:47 BOX-BRIDGE: Message delivered to my-topic[0]@11
+2024/12/01 22:21:47 Message successfully sent to Kafka!
+2024/12/01 22:21:47 BOX-BRIDGE: Consumer for topic my-topic started
+2024/12/01 22:21:50 Received message: {"name":"Erdem Köşk","note":"Hey , box-bridge is amazing mate!"}
+2024/12/01 22:21:57 Shutting down Kafka manager
+2024/12/01 22:21:57 BOX-BRIDGE: Closing consumer for topic my-topic
+2024/12/01 22:21:57 BOX-BRIDGE: Closing producer for topic my-topic
+2024/12/01 22:21:57 BOX-BRIDGE: Kafka Manager shut down gracefully
+2024/12/01 22:21:58 BOX-BRIDGE: MongoDB connection successfully closed.
 ```   
+
+ **Console For Cannot Handle Consumer Message So It Wont Commited:**
+ ```bash
+2024/12/05 23:56:16 BOX-BRIDGE: Collection 'inbox' correlationId index created successfully
+2024/12/05 23:56:16 BOX-BRIDGE: Collection 'outbox' correlationId index created successfully
+2024/12/05 23:56:16 BOX-BRIDGE: MongoDB connection successfully established.
+%4|1733432176.936|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property group.id is a consumer property and will be ignored by this producer instance
+%4|1733432176.936|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property enable.auto.commit is a consumer property and will be ignored by this producer instance
+%4|1733432176.936|CONFWARN|rdkafka#producer-1| [thrd:app]: Configuration property auto.offset.reset is a consumer property and will be ignored by this producer instance
+2024/12/05 23:56:16 BOX-BRIDGE: Producer for topic my-topic initialized
+2024/12/05 23:56:17 BOX-BRIDGE: Message delivered to my-topic[0]@5
+2024/12/05 23:56:17 Message successfully sent to Kafka!
+2024/12/05 23:56:17 BOX-BRIDGE: Consumer for topic my-topic started
+2024/12/05 23:56:20 Received message: {"name":"Erdem Köşk","note":"Hey , box-bridge is amazing mate!"}
+2024/12/05 23:56:20 Error in handler function for message: something went wrong , it should not commit any offset!
+2024/12/05 23:56:27 Shutting down Kafka manager
+2024/12/05 23:56:27 BOX-BRIDGE: Closing consumer for topic my-topic
+2024/12/05 23:56:27 BOX-BRIDGE: Closing producer for topic my-topic
+2024/12/05 23:56:27 BOX-BRIDGE: Kafka Manager shut down gracefully
+2024/12/05 23:56:27 BOX-BRIDGE: MongoDB connection successfully closed.
+```  
 
 
 **Auto Created Collections**
@@ -128,3 +130,5 @@ func main() {
 ![Outbox](https://i.imgur.com/nYn2CK5.png)
 **Inbox Collection**
 ![Inbox](https://i.imgur.com/gXoH5R5.png)
+**Receive message but if u cannot processed it wont commited on inbox**
+![Inbox](https://i.imgur.com/yOpyMOB.png)

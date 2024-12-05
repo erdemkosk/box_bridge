@@ -84,10 +84,29 @@ func (m *MongoManager) SaveToInbox(message models.Inbox) error {
 	return m.insertMessage("inbox", message)
 }
 
-func (m *MongoManager) UpdateOutboxStatus(messageID string, status string) error {
+func (m *MongoManager) UpdateOutboxStatus(correlationId string, status string) error {
 	collection := m.database.Collection("outbox")
 
-	filter := bson.M{"message_id": messageID}
+	filter := bson.M{"correlation_id": correlationId}
+
+	update := bson.M{
+		"$set": bson.M{
+			"status": status,
+		},
+	}
+
+	_, err := collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return fmt.Errorf("BOX-BRIDGE: failed to update message status: %v", err)
+	}
+
+	return nil
+}
+
+func (m *MongoManager) UpdateInboxStatus(correlationId string, status string) error {
+	collection := m.database.Collection("inbox")
+
+	filter := bson.M{"correlation_id": correlationId}
 
 	update := bson.M{
 		"$set": bson.M{

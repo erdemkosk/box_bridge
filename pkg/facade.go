@@ -69,7 +69,28 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 			log.Printf("Error saving to inbox: %v", err)
 		}
 
-		return consumerConfig.HandlerFunc(msg)
+		err = consumerConfig.HandlerFunc(msg)
+		if err != nil {
+			log.Printf("Error in handler function for message: %v", err)
+
+			err = mongoManager.UpdateInboxStatus(correlationID, "FailedToProcess")
+			if err != nil {
+				return fmt.Errorf("failed to update inbox status: %v", err)
+			}
+
+			return err
+		}
+
+		err = kafkaManager.CommitOffset(msg)
+		if err != nil {
+			log.Printf("Error committing offset for message: %v", err)
+			return err
+		}
+
+		log.Printf("Message successfully processed and offset committed for %v", msg.TopicPartition)
+
+		return nil
+
 	}
 
 	if err := kafkaManager.StartConsumer(kafkaModels.ConsumerConfig{
@@ -116,7 +137,7 @@ func (bb *Boxbridge) Produce(producerConfig kafkaModels.ProducerConfig, key stri
 		log.Println("Message successfully sent to Kafka!")
 	}
 
-	err = mongoManager.UpdateOutboxStatus(key, "SentToKafka")
+	err = mongoManager.UpdateOutboxStatus(correlationID, "SentToKafka")
 	if err != nil {
 		return fmt.Errorf("failed to update outbox status: %v", err)
 	}

@@ -23,9 +23,10 @@ func NewKafkaManager(brokers string, groupID string) *KafkaManager {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	config := &kafka.ConfigMap{
-		"bootstrap.servers": brokers,
-		"group.id":          groupID,
-		"auto.offset.reset": "earliest",
+		"bootstrap.servers":  brokers,
+		"group.id":           groupID,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": false,
 	}
 
 	return &KafkaManager{
@@ -163,4 +164,24 @@ func logErrorf(format string, args ...interface{}) error {
 	err := fmt.Errorf(format, args...)
 	log.Println(err)
 	return err
+}
+
+func (k *KafkaManager) CommitOffset(msg *model.KafkaMessage) error {
+	offset := msg.TopicPartition.Offset
+	log.Printf("Attempting to commit offset %v for message %v", offset, msg.TopicPartition)
+
+	_, err := k.consumers[*msg.TopicPartition.Topic].CommitOffsets([]kafka.TopicPartition{
+		{
+			Topic:     msg.TopicPartition.Topic,
+			Partition: msg.TopicPartition.Partition,
+			Offset:    offset + 1,
+		},
+	})
+	if err != nil {
+		log.Printf("Error committing offset %v for message %v: %v", offset, msg.TopicPartition, err)
+		return err
+	}
+
+	log.Printf("Successfully committed offset %v for message %v", offset, msg.TopicPartition)
+	return nil
 }

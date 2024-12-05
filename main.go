@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"time"
 
@@ -36,10 +37,13 @@ func main() {
 		Note: "Hey , box-bridge is amazing mate!",
 	}, uuid.New().String()+"-example service", nil)
 
-	// Create handler function for consumer each or one
+	// Create handler function for consumer each or one if u return nil it will commited if u return error it wont commited
 	handlerFunc := func(msg *model.KafkaMessage) error {
 		log.Printf("Received message: %s", string(msg.Value))
-		return nil
+
+		err := errors.New("something went wrong , it should not commit any offset!")
+
+		return err
 	}
 
 	consumerConfig := model.ConsumerConfig{
