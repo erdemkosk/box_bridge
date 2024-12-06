@@ -108,7 +108,8 @@ func (m *MongoManager) UpdateOutboxStatus(correlationId string, status string) e
 
 	update := bson.M{
 		"$set": bson.M{
-			"status": status,
+			"status":     status,
+			"updated_at": time.Now().Format(time.RFC3339),
 		},
 	}
 
@@ -129,7 +130,8 @@ func (m *MongoManager) UpdateInboxStatus(correlationId string, status string) er
 
 	update := bson.M{
 		"$set": bson.M{
-			"status": status,
+			"status":     status,
+			"updated_at": time.Now().Format(time.RFC3339),
 		},
 	}
 

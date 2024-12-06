@@ -58,7 +58,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig pkg.ConsumerConfig) {
 			Offset:        fmt.Sprintf("%v", msg.TopicPartition.Offset),
 			Key:           string(msg.Key),
 			Content:       string(msg.Value),
-			Status:        "Received",
+			Status:        pkg.StatusReceived,
 			CreatedAt:     time.Now().Format(time.RFC3339),
 			UpdatedAt:     time.Now().Format(time.RFC3339),
 		}
@@ -72,7 +72,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig pkg.ConsumerConfig) {
 		if err != nil {
 			log.Printf("Error in handler function for message: %v", err)
 
-			err = mongoManager.UpdateInboxStatus(correlationID, "FailedToProcess")
+			err = mongoManager.UpdateInboxStatus(correlationID, pkg.StatusFailedToProcess)
 			if err != nil {
 				return fmt.Errorf("failed to update inbox status: %v", err)
 			}
@@ -86,7 +86,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig pkg.ConsumerConfig) {
 			return err
 		}
 
-		err = mongoManager.UpdateInboxStatus(correlationID, "Processed")
+		err = mongoManager.UpdateInboxStatus(correlationID, pkg.StatusProcessed)
 		if err != nil {
 			return fmt.Errorf("failed to update inbox status: %v", err)
 		}
@@ -116,16 +116,18 @@ func (bb *Boxbridge) Produce(producerConfig pkg.ProducerConfig, key string, mess
 	jsonKey, _ := json.Marshal(key)
 	jsonMessage, _ := json.Marshal(message)
 
-	err := mongoManager.SaveToOutbox(db.Outbox{
+	outboxMessage := db.Outbox{
 		Key:           key,
 		CorrelationID: correlationID,
 		Topic:         producerConfig.TopicName,
 		Content:       string(jsonMessage),
-		Status:        "WaitingForSendingKafka",
+		Status:        pkg.StatusPending,
 		RetryCount:    3,
 		CreatedAt:     time.Now().Format(time.RFC3339),
 		UpdatedAt:     time.Now().Format(time.RFC3339),
-	})
+	}
+
+	err := mongoManager.SaveToOutbox(outboxMessage)
 	if err != nil {
 		return fmt.Errorf("failed to save to outbox: %v", err)
 	}
@@ -137,11 +139,17 @@ func (bb *Boxbridge) Produce(producerConfig pkg.ProducerConfig, key string, mess
 
 	if err := kafkaManager.Produce(producerConfig.TopicName, jsonKey, jsonMessage, headers); err != nil {
 		log.Printf("Error sending message: %v", err)
+
+		err = mongoManager.UpdateOutboxStatus(correlationID, pkg.StatusFailedToSend)
+		if err != nil {
+			return fmt.Errorf("failed to update outbox status: %v", err)
+		}
+
 	} else {
 		log.Println("Message successfully sent to Kafka!")
 	}
 
-	err = mongoManager.UpdateOutboxStatus(correlationID, "SentToKafka")
+	err = mongoManager.UpdateOutboxStatus(correlationID, pkg.StatusSentToKafka)
 	if err != nil {
 		return fmt.Errorf("failed to update outbox status: %v", err)
 	}

@@ -45,3 +45,12 @@ type ConsumerConfig struct {
 	MaxPartitionFetchBytes int                       // Maximum number of bytes to fetch from each partition
 	ClientID               string                    // Kafka consumer client ID
 }
+
+const (
+	StatusReceived        = "Received"        // Message received
+	StatusSentToKafka     = "SentToKafka"     // Sent to Kafka
+	StatusFailedToSend    = "FailedToSend"    // Failed to send to Kafka
+	StatusProcessed       = "Processed"       // Message successfully processed
+	StatusFailedToProcess = "FailedToProcess" // Error during processing
+	StatusPending         = "Pending"         // Message is pending processing
+)
