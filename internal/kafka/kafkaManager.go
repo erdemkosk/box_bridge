@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/erdemkosk/box_bridge/pkg/model"
+	"github.com/erdemkosk/box_bridge/pkg"
 )
 
 type KafkaManager struct {
@@ -38,7 +38,7 @@ func NewKafkaManager(brokers string, groupID string) *KafkaManager {
 	}
 }
 
-func (k *KafkaManager) InitProducer(config model.ProducerConfig) error {
+func (k *KafkaManager) InitProducer(config pkg.ProducerConfig) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
@@ -52,7 +52,7 @@ func (k *KafkaManager) InitProducer(config model.ProducerConfig) error {
 	return nil
 }
 
-func (k *KafkaManager) StartConsumer(topicConfig model.ConsumerConfig) error {
+func (k *KafkaManager) StartConsumer(topicConfig pkg.ConsumerConfig) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
@@ -78,7 +78,7 @@ func (k *KafkaManager) StartConsumer(topicConfig model.ConsumerConfig) error {
 			default:
 				msg, err := consumer.ReadMessage(-1)
 
-				convertedValue := model.KafkaMessage{
+				convertedValue := pkg.KafkaMessage{
 					TopicPartition: msg.TopicPartition,
 					Value:          msg.Value,
 					Key:            msg.Key,
@@ -101,7 +101,7 @@ func (k *KafkaManager) StartConsumer(topicConfig model.ConsumerConfig) error {
 	return nil
 }
 
-func (k *KafkaManager) Produce(topic string, key []byte, value []byte, headers []model.KafkaHeader) error {
+func (k *KafkaManager) Produce(topic string, key []byte, value []byte, headers []pkg.KafkaHeader) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
@@ -166,7 +166,7 @@ func logErrorf(format string, args ...interface{}) error {
 	return err
 }
 
-func (k *KafkaManager) CommitOffset(msg *model.KafkaMessage) error {
+func (k *KafkaManager) CommitOffset(msg *pkg.KafkaMessage) error {
 	offset := msg.TopicPartition.Offset
 	log.Printf("Attempting to commit offset %v for message %v", offset, msg.TopicPartition)
 

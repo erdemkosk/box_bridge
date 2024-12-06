@@ -1,4 +1,4 @@
-package pkg
+package box_bridge
 
 import (
 	"encoding/json"
@@ -7,22 +7,21 @@ import (
 	"time"
 
 	"github.com/erdemkosk/box_bridge/internal/db"
-	"github.com/erdemkosk/box_bridge/internal/db/models"
 	"github.com/erdemkosk/box_bridge/internal/kafka"
-	"github.com/erdemkosk/box_bridge/pkg/model"
-	kafkaModels "github.com/erdemkosk/box_bridge/pkg/model"
+
+	"github.com/erdemkosk/box_bridge/pkg"
 	"github.com/google/uuid"
 )
 
 type Boxbridge struct {
-	config *BoxBridgeConfig
+	config *pkg.BoxBridgeConfig
 }
 
 var boxbridgeRunner *Boxbridge
 var kafkaManager *kafka.KafkaManager
 var mongoManager *db.MongoManager
 
-func NewBoxBridge(config *BoxBridgeConfig) *Boxbridge {
+func NewBoxBridge(config *pkg.BoxBridgeConfig) *Boxbridge {
 	var mongoErr error
 
 	mongoManager, mongoErr = db.NewMongoManager(config.MongoDBURL)
@@ -36,16 +35,16 @@ func NewBoxBridge(config *BoxBridgeConfig) *Boxbridge {
 	return boxbridgeRunner
 }
 
-func (bb *Boxbridge) AddProducer(producerConfig kafkaModels.ProducerConfig) {
+func (bb *Boxbridge) AddProducer(producerConfig pkg.ProducerConfig) {
 	if err := kafkaManager.InitProducer(producerConfig); err != nil {
 		log.Fatalf("Error initializing producer: %v", err)
 	}
 }
 
 // (Kafka → Wrapper -> Inbox -> Hander)
-func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
+func (bb *Boxbridge) AddConsumer(consumerConfig pkg.ConsumerConfig) {
 
-	wrappedHandler := func(msg *kafkaModels.KafkaMessage) error {
+	wrappedHandler := func(msg *pkg.KafkaMessage) error {
 
 		correlationID, found := kafka.GetHeaderValue(msg.Headers, "CorrelationID")
 		if !found {
@@ -53,7 +52,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 			correlationID = "unknown"
 		}
 
-		inboxMessage := models.Inbox{
+		inboxMessage := db.Inbox{
 			Topic:         *msg.TopicPartition.Topic,
 			CorrelationID: correlationID,
 			Offset:        fmt.Sprintf("%v", msg.TopicPartition.Offset),
@@ -98,7 +97,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 
 	}
 
-	if err := kafkaManager.StartConsumer(kafkaModels.ConsumerConfig{
+	if err := kafkaManager.StartConsumer(pkg.ConsumerConfig{
 		TopicName:   consumerConfig.TopicName,
 		GroupID:     consumerConfig.GroupID,
 		HandlerFunc: wrappedHandler,
@@ -108,7 +107,7 @@ func (bb *Boxbridge) AddConsumer(consumerConfig kafkaModels.ConsumerConfig) {
 }
 
 // (Outbox → Kafka -> Update Status Of Outbox)
-func (bb *Boxbridge) Produce(producerConfig kafkaModels.ProducerConfig, key string, message interface{}, correlationID string, headers []model.KafkaHeader) error {
+func (bb *Boxbridge) Produce(producerConfig pkg.ProducerConfig, key string, message interface{}, correlationID string, headers []pkg.KafkaHeader) error {
 
 	if correlationID == "" {
 		correlationID = uuid.New().String()
@@ -117,7 +116,7 @@ func (bb *Boxbridge) Produce(producerConfig kafkaModels.ProducerConfig, key stri
 	jsonKey, _ := json.Marshal(key)
 	jsonMessage, _ := json.Marshal(message)
 
-	err := mongoManager.SaveToOutbox(models.Outbox{
+	err := mongoManager.SaveToOutbox(db.Outbox{
 		Key:           key,
 		CorrelationID: correlationID,
 		Topic:         producerConfig.TopicName,
@@ -131,7 +130,7 @@ func (bb *Boxbridge) Produce(producerConfig kafkaModels.ProducerConfig, key stri
 		return fmt.Errorf("failed to save to outbox: %v", err)
 	}
 
-	headers = append(headers, model.KafkaHeader{
+	headers = append(headers, pkg.KafkaHeader{
 		Key:   "CorrelationID",
 		Value: []byte(correlationID),
 	})

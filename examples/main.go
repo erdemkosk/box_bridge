@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/erdemkosk/box_bridge"
 	"github.com/erdemkosk/box_bridge/pkg"
-	"github.com/erdemkosk/box_bridge/pkg/model"
 	"github.com/google/uuid"
 )
 
@@ -17,7 +17,7 @@ type Foo struct {
 
 func main() {
 
-	boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
+	boxBridge := box_bridge.NewBoxBridge(pkg.NewConfigBuilder().
 		WithMongoDBURL("mongodb://localhost:27017").
 		WithKafkaURL("localhost:9092").
 		WithOutboxCollection("outbox").
@@ -25,7 +25,7 @@ func main() {
 		WithRetryAttempts(3).
 		Build())
 
-	producerConfig := model.ProducerConfig{
+	producerConfig := pkg.ProducerConfig{
 		TopicName: "my-topic",
 		ClientID:  "my-producer",
 	}
@@ -38,7 +38,7 @@ func main() {
 	}, uuid.New().String()+"-example service", nil)
 
 	// Create handler function for consumer each or one if u return nil it will commited if u return error it wont commited
-	handlerFunc := func(msg *model.KafkaMessage) error {
+	handlerFunc := func(msg *pkg.KafkaMessage) error {
 		log.Printf("Received message: %s", string(msg.Value))
 
 		err := errors.New("something went wrong , it should not commit any offset!")
@@ -46,7 +46,7 @@ func main() {
 		return err
 	}
 
-	consumerConfig := model.ConsumerConfig{
+	consumerConfig := pkg.ConsumerConfig{
 		TopicName:   "my-topic",
 		GroupID:     "my-consumer-group",
 		HandlerFunc: handlerFunc,
