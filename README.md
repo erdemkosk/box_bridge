@@ -51,39 +51,57 @@ By achieving these goals, the BoxBridge project aims to provide a flexible, easy
 ## How to Use
 
 ```bash
-  boxBridge := pkg.NewBoxBridge(pkg.NewConfigBuilder().
+ type Foo struct {
+	Name string `json:"name"`
+	Note string `json:"note"`
+}
+
+func main() {
+
+	boxBridge := box_bridge.NewBoxBridge(pkg.NewConfigBuilder().
 		WithMongoDBURL("mongodb://localhost:27017").
 		WithKafkaURL("localhost:9092").
-		WithOutboxCollection("outbox"). //default as outbox if u need use this and change it
-		WithInboxCollection("inbox"). //default as inbox if u need use this and change it
+		WithOutboxCollection("outbox").
+		WithInboxCollection("inbox").
 		WithRetryAttempts(3).
 		Build())
 
-	producerConfig := model.ProducerConfig{
+	producerConfig := pkg.ProducerConfig{
 		TopicName: "my-topic",
 		ClientID:  "my-producer",
 	}
 
 	boxBridge.AddProducer(producerConfig)
 
-	boxBridge.Produce(producerConfig, "key1", Foo{
+	boxBridge.Produce(producerConfig, "key", Foo{
 		Name: "Erdem Köşk",
 		Note: "Hey , box-bridge is amazing mate!",
-	})
+	}, uuid.New().String()+"-example service", nil)
 
-	// Create handler function for consumer each or one
-	handlerFunc := func(msg *model.KafkaMessage) error {
+	// Create handler function for consumer each or one if u return nil it will commited if u return error it wont commited
+	handlerFunc := func(msg *pkg.KafkaMessage) error {
 		log.Printf("Received message: %s", string(msg.Value))
-		return nil
+
+		err := errors.New("something went wrong , it should not commit any offset!")
+
+		return err
 	}
 
-	consumerConfig := model.ConsumerConfig{
+	consumerConfig := pkg.ConsumerConfig{
 		TopicName:   "my-topic",
 		GroupID:     "my-consumer-group",
 		HandlerFunc: handlerFunc,
 	}
 
 	boxBridge.AddConsumer(consumerConfig)
+
+	select {
+	case <-time.After(10 * time.Second):
+		log.Println("Shutting down Kafka manager")
+		boxBridge.Shutdown()
+	}
+
+}
 ```
  **Console For Handle Consumer With Success:**
  ```bash
