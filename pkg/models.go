@@ -37,16 +37,11 @@ type ConsumerConfig struct {
 	TopicName              string                    // Topic name to subscribe to
 	HandlerFunc            func(*KafkaMessage) error // Function to handle incoming messages
 	GroupID                string                    // Consumer group ID
-	AutoCommit             bool                      // Whether offsets should be automatically committed
-	MaxPollRecords         int                       // Maximum number of records to fetch in a single poll
-	SessionTimeoutMs       int                       // Session timeout in milliseconds (if no heartbeat is received, the session expires)
-	HeartbeatIntervalMs    int                       // Interval to send heartbeat messages to Kafka (in milliseconds)
+	SessionTimeoutMs       int                       // Session timeout in milliseconds
+	HeartbeatIntervalMs    int                       // Interval to send heartbeat messages to Kafka
 	EnableAutoOffsetStore  bool                      // Whether to prevent auto-committing offsets
-	IsolationLevel         string                    // Message isolation level (e.g., "read_committed")
-	RebalanceTimeoutMs     int                       // Timeout for rebalance operations (in milliseconds)
+	IsolationLevel         string                    // Message isolation level
 	FetchMinBytes          int                       // Minimum number of bytes to fetch per poll
-	FetchMaxWaitMs         int                       // Maximum wait time to fetch data (in milliseconds)
 	MaxPartitionFetchBytes int                       // Maximum number of bytes to fetch from each partition
-	RetryBackoffMs         int                       // Backoff time before retrying after a failure (in milliseconds)
 	ClientID               string                    // Kafka consumer client ID
 }

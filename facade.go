@@ -30,7 +30,7 @@ func NewBoxBridge(config *pkg.BoxBridgeConfig) *Boxbridge {
 		panic(mongoErr)
 	}
 
-	kafkaManager = kafka.NewKafkaManager(config.KafkaURL, "my-consumer-group")
+	kafkaManager = kafka.NewKafkaManager(config.KafkaURL)
 
 	return boxbridgeRunner
 }

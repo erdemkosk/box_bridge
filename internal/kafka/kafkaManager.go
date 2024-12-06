@@ -14,18 +14,16 @@ type KafkaManager struct {
 	producers map[string]*kafka.Producer
 	consumers map[string]*kafka.Consumer
 	brokers   string
-	groupID   string
 	mu        sync.Mutex
 	ctx       context.Context
 	cancel    context.CancelFunc
 }
 
-func NewKafkaManager(brokers string, groupID string) *KafkaManager {
+func NewKafkaManager(brokers string) *KafkaManager {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &KafkaManager{
 		brokers:   brokers,
-		groupID:   groupID,
 		producers: make(map[string]*kafka.Producer),
 		consumers: make(map[string]*kafka.Consumer),
 		ctx:       ctx,
@@ -38,7 +36,15 @@ func (k *KafkaManager) InitProducer(config pkg.ProducerConfig) error {
 	defer k.mu.Unlock()
 
 	producerConfig := &kafka.ConfigMap{
-		"bootstrap.servers": k.brokers,
+		"bootstrap.servers":                     k.brokers,
+		"acks":                                  defaultString(config.Acks, "all"),
+		"retries":                               defaultInt(config.Retries, 5),
+		"batch.size":                            defaultInt(config.BatchSize, 16384),
+		"linger.ms":                             defaultInt(config.LingerMs, 5),
+		"compression.type":                      defaultString(config.CompressionType, "none"),
+		"max.in.flight.requests.per.connection": defaultInt(config.MaxInFlightRequestsPerConn, 5),
+		"client.id":                             defaultString(config.ClientID, "default-producer"),
+		"delivery.timeout.ms":                   defaultInt(config.DeliveryTimeoutMs, 30000),
 	}
 
 	producer, err := kafka.NewProducer(producerConfig)
@@ -56,10 +62,17 @@ func (k *KafkaManager) StartConsumer(topicConfig pkg.ConsumerConfig) error {
 	defer k.mu.Unlock()
 
 	consumerConfig := &kafka.ConfigMap{
-		"bootstrap.servers":  k.brokers,
-		"group.id":           k.groupID,
-		"auto.offset.reset":  "earliest",
-		"enable.auto.commit": false,
+		"bootstrap.servers":         k.brokers,
+		"group.id":                  topicConfig.GroupID,
+		"auto.offset.reset":         "earliest",
+		"enable.auto.commit":        false,
+		"session.timeout.ms":        defaultInt(topicConfig.SessionTimeoutMs, 10000),
+		"heartbeat.interval.ms":     defaultInt(topicConfig.HeartbeatIntervalMs, 3000),
+		"enable.auto.offset.store":  topicConfig.EnableAutoOffsetStore,
+		"isolation.level":           defaultString(topicConfig.IsolationLevel, "read_committed"),
+		"fetch.min.bytes":           defaultInt(topicConfig.FetchMinBytes, 1),
+		"max.partition.fetch.bytes": defaultInt(topicConfig.MaxPartitionFetchBytes, 1048576),
+		"client.id":                 defaultString(topicConfig.ClientID, "default-client"),
 	}
 
 	consumer, err := kafka.NewConsumer(consumerConfig)
