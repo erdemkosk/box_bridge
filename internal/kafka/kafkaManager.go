@@ -13,7 +13,8 @@ import (
 type KafkaManager struct {
 	producers map[string]*kafka.Producer
 	consumers map[string]*kafka.Consumer
-	config    *kafka.ConfigMap
+	brokers   string
+	groupID   string
 	mu        sync.Mutex
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -22,15 +23,9 @@ type KafkaManager struct {
 func NewKafkaManager(brokers string, groupID string) *KafkaManager {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	config := &kafka.ConfigMap{
-		"bootstrap.servers":  brokers,
-		"group.id":           groupID,
-		"auto.offset.reset":  "earliest",
-		"enable.auto.commit": false,
-	}
-
 	return &KafkaManager{
-		config:    config,
+		brokers:   brokers,
+		groupID:   groupID,
 		producers: make(map[string]*kafka.Producer),
 		consumers: make(map[string]*kafka.Consumer),
 		ctx:       ctx,
@@ -42,7 +37,11 @@ func (k *KafkaManager) InitProducer(config pkg.ProducerConfig) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
-	producer, err := kafka.NewProducer(k.config)
+	producerConfig := &kafka.ConfigMap{
+		"bootstrap.servers": k.brokers,
+	}
+
+	producer, err := kafka.NewProducer(producerConfig)
 	if err != nil {
 		return err
 	}
@@ -56,7 +55,14 @@ func (k *KafkaManager) StartConsumer(topicConfig pkg.ConsumerConfig) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
-	consumer, err := kafka.NewConsumer(k.config)
+	consumerConfig := &kafka.ConfigMap{
+		"bootstrap.servers":  k.brokers,
+		"group.id":           k.groupID,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": false,
+	}
+
+	consumer, err := kafka.NewConsumer(consumerConfig)
 	if err != nil {
 		return err
 	}
